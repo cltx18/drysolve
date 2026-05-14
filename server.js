@@ -30,12 +30,14 @@ const leadRoutes = require('./routes/leads');
 const franchiseRoutes = require('./routes/franchise');
 const adminRoutes = require('./routes/admin');
 const geoRoutes = require('./routes/geo');
+const twilioRoutes = require('./routes/twilio');
 
 app.use('/api/locations', locationRoutes);
 app.use('/api/leads', formLimiter, leadRoutes);
 app.use('/api/franchise', formLimiter, franchiseRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/geo', geoRoutes);
+app.use('/api/twilio', twilioRoutes);
 
 // Page routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));

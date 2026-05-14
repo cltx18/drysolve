@@ -83,7 +83,7 @@
       <div class="admin-nav-item active" data-view="overview">📊 Overview</div>
       <div class="admin-nav-item" data-view="locations">📍 Locations</div>
       <div class="admin-nav-item" data-view="leads">🎯 Leads</div>
-      <div class="admin-nav-item" data-view="franchise">🏢 Franchise Inquiries</div>
+      <div class="admin-nav-item" data-view="calls">📞 Calls</div>
     </nav>
   </aside>
 
@@ -153,18 +153,41 @@
       </div>
     </section>
 
-    <!-- FRANCHISE -->
-    <section id="view-franchise" class="view">
+    <!-- CALLS -->
+    <section id="view-calls" class="view">
       <div class="panel">
-        <div class="panel-header"><h2>Franchise Inquiries</h2></div>
+        <div class="panel-header">
+          <h2>Inbound Calls</h2>
+          <div>
+            <select id="call-status-filter" class="form-select" style="display:inline-block;width:auto;padding:6px 10px;font-size:13px" onchange="loadCalls()">
+              <option value="">All calls</option>
+              <option value="completed">Completed</option>
+              <option value="no-answer">No answer</option>
+              <option value="busy">Busy</option>
+              <option value="failed">Failed</option>
+              <option value="ringing">Ringing</option>
+            </select>
+          </div>
+        </div>
         <div class="panel-body" style="padding:0;overflow-x:auto">
-          <table class="table" id="franchise-table">
-            <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Target Market</th><th>Capital</th><th>Status</th><th></th></tr></thead>
+          <table class="table" id="calls-table">
+            <thead><tr><th>Date</th><th>From</th><th>Caller City</th><th>Location</th><th>Duration</th><th>Status</th><th>Recording</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
     </section>
+
+    <!-- CALL DETAIL MODAL -->
+    <div id="call-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:24px">
+      <div style="background:var(--white);border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+          <h2 style="margin:0">Call Details</h2>
+          <button onclick="document.getElementById('call-modal').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-500)">&times;</button>
+        </div>
+        <div style="padding:24px" id="call-modal-body"></div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -278,7 +301,7 @@ document.querySelectorAll('.admin-nav-item').forEach(item => {
     document.getElementById('view-title').textContent = item.textContent.trim().replace(/^.{2}\s/, '');
     if (view === 'locations') loadLocations();
     if (view === 'leads') loadLeads();
-    if (view === 'franchise') loadFranchise();
+    if (view === 'calls') loadCalls();
   });
 });
 
@@ -310,7 +333,7 @@ async function loadStats() {
     <div class="stat-card"><div class="label">Total Leads</div><div class="value">${s.total_leads}</div></div>
     <div class="stat-card"><div class="label">New Leads</div><div class="value">${s.new_leads}</div><div class="delta">Awaiting action</div></div>
     <div class="stat-card"><div class="label">Leads This Week</div><div class="value">${s.leads_this_week}</div></div>
-    <div class="stat-card"><div class="label">Franchise Inquiries</div><div class="value">${s.franchise_inquiries}</div><div class="delta">${s.new_franchise_inquiries} new</div></div>
+    <div class="stat-card"><div class="label">Inbound Calls</div><div class="value">${s.total_calls || 0}</div><div class="delta">${s.calls_this_week || 0} this week${s.missed_calls ? ` · ${s.missed_calls} missed` : ''}</div></div>
   `;
 
   const recentBody = document.querySelector('#recent-leads-table tbody');
@@ -444,73 +467,105 @@ async function updateLeadStatus(id, status) {
   });
 }
 
-// ===== FRANCHISE =====
-async function loadFranchise() {
-  const r = await fetch('/api/admin/franchise');
-  const { inquiries } = await r.json();
-  const body = document.querySelector('#franchise-table tbody');
-  body.innerHTML = inquiries.map(i => `
-    <tr>
-      <td>${fmtDate(i.created_at)}</td>
-      <td><strong>${i.first_name} ${i.last_name}</strong></td>
-      <td>${i.email}</td>
-      <td>${fmtPhone(i.phone)}</td>
-      <td>${i.target_market || '—'}</td>
-      <td>${i.liquid_capital || '—'}</td>
-      <td><span class="badge badge-${i.status || 'new'}">${i.status || 'new'}</span></td>
-      <td><button class="btn btn-outline btn-sm" onclick='viewFranchise(${JSON.stringify(i).replace(/'/g,"&#39;")})'>View</button></td>
-    </tr>
-  `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">No inquiries yet</td></tr>';
+// ===== CALLS =====
+async function loadCalls() {
+  const filter = document.getElementById('call-status-filter')?.value || '';
+  const url = filter ? `/api/admin/calls?status=${encodeURIComponent(filter)}` : '/api/admin/calls';
+  const r = await fetch(url);
+  const { calls } = await r.json();
+  const body = document.querySelector('#calls-table tbody');
+  body.innerHTML = calls.map(c => {
+    const duration = c.duration_seconds ? fmtDuration(c.duration_seconds) : '—';
+    const cityState = [c.caller_city, c.caller_state].filter(Boolean).join(', ') || '—';
+    return `
+      <tr>
+        <td>${fmtDate(c.created_at)}</td>
+        <td><strong><a href="tel:${c.from_number || ''}">${fmtPhone(c.from_number)}</a></strong></td>
+        <td>${cityState}${c.caller_zip ? `<br><span style="font-size:12px;color:var(--gray-500)">${c.caller_zip}</span>` : ''}</td>
+        <td>${c.location_name || '—'}</td>
+        <td>${duration}</td>
+        <td><span class="badge badge-${callStatusBadge(c.status)}">${c.status || 'unknown'}</span></td>
+        <td>${c.recording_sid ? `<audio controls preload="none" style="height:32px;max-width:200px"><source src="/api/twilio/recording/${c.recording_sid}" type="audio/mpeg"></audio>` : '—'}</td>
+        <td><button class="btn btn-outline btn-sm" onclick='viewCall(${c.id})'>View</button></td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">No calls yet</td></tr>';
 }
 
-function viewFranchise(i) {
-  document.getElementById('franchise-modal-body').innerHTML = `
+function callStatusBadge(s) {
+  if (s === 'completed' || s === 'answered') return 'won';
+  if (s === 'no-answer' || s === 'busy' || s === 'failed') return 'lost';
+  return 'new';
+}
+
+function fmtDuration(sec) {
+  if (!sec) return '—';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+async function viewCall(id) {
+  const r = await fetch(`/api/admin/calls/${id}`);
+  const { call: c } = await r.json();
+  if (!c) return;
+  document.getElementById('call-modal-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Name</strong><div>${i.first_name} ${i.last_name}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Email</strong><div><a href="mailto:${i.email}">${i.email}</a></div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Phone</strong><div><a href="tel:${i.phone}">${fmtPhone(i.phone)}</a></div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Submitted</strong><div>${fmtDate(i.created_at)}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Address</strong><div>${i.address || '—'}<br>${i.city || ''}, ${i.state || ''} ${i.zip || ''}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Target Market</strong><div>${i.target_market || '—'}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Liquid Capital</strong><div>${i.liquid_capital || '—'}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Net Worth</strong><div>${i.net_worth || '—'}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Timeline</strong><div>${i.timeline || '—'}</div></div>
-      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Experience</strong><div>${i.industry_experience || '—'}</div></div>
-      <div style="grid-column:1/-1"><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Source</strong><div>${i.referral_source || '—'}</div></div>
-      <div style="grid-column:1/-1"><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Message</strong><div style="background:var(--gray-50);padding:12px;border-radius:6px;margin-top:4px">${i.message || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">From</strong><div><a href="tel:${c.from_number || ''}">${fmtPhone(c.from_number)}</a></div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">To</strong><div>${fmtPhone(c.to_number)}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Caller Location</strong><div>${[c.caller_city, c.caller_state, c.caller_zip].filter(Boolean).join(', ') || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Routed To</strong><div>${c.location_name || '—'}${c.forwarded_to ? `<br><span style="font-size:12px;color:var(--gray-500)">${fmtPhone(c.forwarded_to)}</span>` : ''}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Status</strong><div><span class="badge badge-${callStatusBadge(c.status)}">${c.status || '—'}</span></div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Duration</strong><div>${c.duration_seconds ? fmtDuration(c.duration_seconds) : '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Started</strong><div>${fmtDate(c.started_at || c.created_at)}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Call SID</strong><div style="font-family:monospace;font-size:11px;color:var(--gray-500);word-break:break-all">${c.call_sid}</div></div>
     </div>
+
+    ${c.recording_sid ? `
+    <div style="margin-bottom:20px">
+      <strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase;display:block;margin-bottom:8px">Recording</strong>
+      <audio controls style="width:100%"><source src="/api/twilio/recording/${c.recording_sid}" type="audio/mpeg"></audio>
+      <div style="margin-top:6px"><a href="/api/twilio/recording/${c.recording_sid}" download="call-${c.call_sid}.mp3" style="font-size:13px">⬇ Download MP3</a></div>
+    </div>` : ''}
+
+    ${c.transcription_text ? `
+    <div style="margin-bottom:20px">
+      <strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase;display:block;margin-bottom:8px">Transcription</strong>
+      <div style="background:var(--gray-50);padding:14px;border-radius:6px;border-left:3px solid var(--orange);font-size:14px;line-height:1.6">${c.transcription_text}</div>
+    </div>` : (c.recording_sid ? '<div style="color:var(--gray-500);font-size:13px;margin-bottom:20px">Transcription pending…</div>' : '')}
+
     <div class="form-grid" style="border-top:1px solid var(--gray-200);padding-top:20px">
       <div class="form-group">
         <label class="form-label">Status</label>
-        <select id="fr-status" class="form-select">
-          <option value="new" ${i.status === 'new' ? 'selected' : ''}>New</option>
-          <option value="contacted" ${i.status === 'contacted' ? 'selected' : ''}>Contacted</option>
-          <option value="qualified" ${i.status === 'qualified' ? 'selected' : ''}>Qualified</option>
-          <option value="won" ${i.status === 'won' ? 'selected' : ''}>Won</option>
-          <option value="lost" ${i.status === 'lost' ? 'selected' : ''}>Lost</option>
+        <select id="call-status" class="form-select">
+          <option value="completed" ${c.status === 'completed' ? 'selected' : ''}>Completed</option>
+          <option value="no-answer" ${c.status === 'no-answer' ? 'selected' : ''}>No answer</option>
+          <option value="busy" ${c.status === 'busy' ? 'selected' : ''}>Busy</option>
+          <option value="failed" ${c.status === 'failed' ? 'selected' : ''}>Failed</option>
         </select>
       </div>
       <div class="form-group full">
         <label class="form-label">Internal Notes</label>
-        <textarea id="fr-notes" class="form-textarea">${i.notes || ''}</textarea>
+        <textarea id="call-notes" class="form-textarea">${c.notes || ''}</textarea>
       </div>
     </div>
-    <button class="btn btn-navy btn-block" onclick="saveFranchise(${i.id})">Save</button>
+    <button class="btn btn-navy btn-block" onclick="saveCall(${c.id})">Save</button>
+    ${c.lead_id ? `<div style="margin-top:12px;font-size:13px;color:var(--gray-500);text-align:center">Auto-linked to Lead #${c.lead_id}</div>` : ''}
   `;
-  document.getElementById('franchise-modal').classList.add('active');
+  document.getElementById('call-modal').style.display = 'flex';
 }
 
-async function saveFranchise(id) {
-  await fetch(`/api/admin/franchise/${id}`, {
+async function saveCall(id) {
+  await fetch(`/api/admin/calls/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      status: document.getElementById('fr-status').value,
-      notes: document.getElementById('fr-notes').value
+      status: document.getElementById('call-status').value,
+      notes: document.getElementById('call-notes').value
     })
   });
-  document.getElementById('franchise-modal').classList.remove('active');
-  loadFranchise();
+  document.getElementById('call-modal').style.display = 'none';
+  loadCalls();
 }
 
 // Init

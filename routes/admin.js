@@ -51,6 +51,9 @@ router.get('/stats', requireAuth, (req, res) => {
     leads_this_week: db.prepare("SELECT COUNT(*) as c FROM leads WHERE created_at >= datetime('now', '-7 days')").get().c,
     franchise_inquiries: db.prepare('SELECT COUNT(*) as c FROM franchise_inquiries').get().c,
     new_franchise_inquiries: db.prepare("SELECT COUNT(*) as c FROM franchise_inquiries WHERE status = 'new'").get().c,
+    total_calls: db.prepare('SELECT COUNT(*) as c FROM calls').get().c,
+    calls_this_week: db.prepare("SELECT COUNT(*) as c FROM calls WHERE created_at >= datetime('now', '-7 days')").get().c,
+    missed_calls: db.prepare("SELECT COUNT(*) as c FROM calls WHERE status IN ('no-answer','busy','failed')").get().c,
     leads_by_state: db.prepare(`
       SELECT state, COUNT(*) as count FROM leads
       WHERE state IS NOT NULL GROUP BY state ORDER BY count DESC LIMIT 10
@@ -59,6 +62,11 @@ router.get('/stats', requireAuth, (req, res) => {
       SELECT l.*, loc.name as location_name FROM leads l
       LEFT JOIN locations loc ON l.location_id = loc.id
       ORDER BY l.created_at DESC LIMIT 10
+    `).all(),
+    recent_calls: db.prepare(`
+      SELECT c.*, loc.name as location_name FROM calls c
+      LEFT JOIN locations loc ON c.location_id = loc.id
+      ORDER BY c.created_at DESC LIMIT 10
     `).all()
   };
   res.json(stats);
@@ -185,6 +193,46 @@ router.put('/franchise/:id', requireAuth, (req, res) => {
     UPDATE franchise_inquiries SET status = COALESCE(?, status), notes = COALESCE(?, notes)
     WHERE id = ?
   `).run(status || null, notes || null, req.params.id);
+  res.json({ success: true });
+});
+
+// ===== CALLS =====
+router.get('/calls', requireAuth, (req, res) => {
+  const { status, location_id, limit = 100 } = req.query;
+  let sql = `
+    SELECT c.*, loc.name as location_name, loc.city as location_city
+    FROM calls c LEFT JOIN locations loc ON c.location_id = loc.id
+    WHERE 1=1
+  `;
+  const params = [];
+  if (status) { sql += ' AND c.status = ?'; params.push(status); }
+  if (location_id) { sql += ' AND c.location_id = ?'; params.push(location_id); }
+  sql += ' ORDER BY c.created_at DESC LIMIT ?';
+  params.push(parseInt(limit));
+
+  const calls = db.prepare(sql).all(...params);
+  res.json({ calls });
+});
+
+router.get('/calls/:id', requireAuth, (req, res) => {
+  const call = db.prepare(`
+    SELECT c.*, loc.name as location_name, loc.city as location_city, loc.phone as location_phone
+    FROM calls c LEFT JOIN locations loc ON c.location_id = loc.id
+    WHERE c.id = ?
+  `).get(req.params.id);
+  if (!call) return res.status(404).json({ error: 'Call not found' });
+  res.json({ call });
+});
+
+router.put('/calls/:id', requireAuth, (req, res) => {
+  const { status, notes, location_id } = req.body;
+  db.prepare(`
+    UPDATE calls
+    SET status = COALESCE(?, status),
+        notes = COALESCE(?, notes),
+        location_id = COALESCE(?, location_id)
+    WHERE id = ?
+  `).run(status || null, notes || null, location_id || null, req.params.id);
   res.json({ success: true });
 });
 
