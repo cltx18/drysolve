@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | DrySolve Admin</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  body { background: var(--gray-50); }
+  .admin-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .admin-sidebar { background: var(--navy-dark); color: var(--white); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .admin-sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--white); }
+  .admin-sidebar .logo .logo-text { color: var(--white); }
+  .admin-nav { padding: 16px 0; }
+  .admin-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,0.7); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; font-weight: 500; }
+  .admin-nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+  .admin-nav-item.active { background: rgba(255,107,26,0.1); color: var(--orange); border-left-color: var(--orange); }
+  .admin-main { padding: 32px 40px; overflow-x: hidden; }
+  .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+  .admin-header h1 { font-size: 32px; }
+  .logout-btn { background: transparent; border: 2px solid var(--gray-300); color: var(--gray-700); padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 14px; }
+  .logout-btn:hover { background: var(--gray-100); }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--white); padding: 24px; border-radius: 10px; box-shadow: var(--shadow-sm); border-left: 4px solid var(--orange); }
+  .stat-card .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-500); margin-bottom: 8px; }
+  .stat-card .value { font-family: var(--font-display); font-size: 36px; font-weight: 800; color: var(--navy); line-height: 1; }
+  .stat-card .delta { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+
+  .panel { background: var(--white); border-radius: 10px; box-shadow: var(--shadow-sm); margin-bottom: 24px; overflow: hidden; }
+  .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+  .panel-header h2 { font-size: 18px; }
+  .panel-body { padding: 24px; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .table th { text-align: left; padding: 12px 16px; background: var(--gray-50); font-weight: 700; color: var(--navy); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--gray-200); }
+  .table td { padding: 14px 16px; border-bottom: 1px solid var(--gray-100); }
+  .table tr:hover { background: var(--gray-50); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .badge-new { background: #fef3c7; color: #92400e; }
+  .badge-contacted { background: #dbeafe; color: #1e40af; }
+  .badge-won { background: #d1fae5; color: #065f46; }
+  .badge-lost { background: #fee2e2; color: #991b1b; }
+  .badge-active { background: #d1fae5; color: #065f46; }
+  .badge-inactive { background: var(--gray-200); color: var(--gray-600); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,37,64,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--white); border-radius: 12px; max-width: 720px; width: 100%; max-height: 90vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+  .modal-body { padding: 24px; }
+  .modal-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--gray-500); }
+
+  @media (max-width: 768px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .admin-sidebar { position: relative; height: auto; }
+    .admin-nav { display: flex; overflow-x: auto; padding: 8px 0; }
+    .admin-nav-item { white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
+    .admin-nav-item.active { border-left-color: transparent; border-bottom-color: var(--orange); }
+    .admin-main { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <a href="/" class="logo">
+      <div class="logo-mark">DS</div>
+      <span class="logo-text">DrySolve<span style="color:var(--orange)">.</span></span>
+    </a>
+    <nav class="admin-nav">
+      <div class="admin-nav-item active" data-view="overview">📊 Overview</div>
+      <div class="admin-nav-item" data-view="locations">📍 Locations</div>
+      <div class="admin-nav-item" data-view="leads">🎯 Leads</div>
+      <div class="admin-nav-item" data-view="franchise">🏢 Franchise Inquiries</div>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <h1 id="view-title">Overview</h1>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section id="view-overview" class="view active">
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Recent Leads</h2></div>
+        <div class="panel-body" style="padding:0;overflow-x:auto">
+          <table class="table" id="recent-leads-table">
+            <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Service</th><th>Location</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Leads by State</h2></div>
+        <div class="panel-body" id="state-stats"></div>
+      </div>
+    </section>
+
+    <!-- LOCATIONS -->
+    <section id="view-locations" class="view">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Franchise Locations</h2>
+          <button class="btn btn-primary btn-sm" onclick="openLocationModal()">+ Add Location</button>
+        </div>
+        <div class="panel-body" style="padding:0;overflow-x:auto">
+          <table class="table" id="locations-table">
+            <thead><tr><th>Name</th><th>City, State</th><th>Phone</th><th>Leads</th><th>Status</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- LEADS -->
+    <section id="view-leads" class="view">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>All Leads</h2>
+          <div>
+            <select id="status-filter" class="form-select" style="display:inline-block;width:auto;padding:6px 10px;font-size:13px" onchange="loadLeads()">
+              <option value="">All statuses</option>
+              <option value="new">New</option>
+              <option value="contacted">Contacted</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0;overflow-x:auto">
+          <table class="table" id="leads-table">
+            <thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Service</th><th>City</th><th>Location</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FRANCHISE -->
+    <section id="view-franchise" class="view">
+      <div class="panel">
+        <div class="panel-header"><h2>Franchise Inquiries</h2></div>
+        <div class="panel-body" style="padding:0;overflow-x:auto">
+          <table class="table" id="franchise-table">
+            <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Target Market</th><th>Capital</th><th>Status</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Location Modal -->
+<div class="modal-overlay" id="loc-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="loc-modal-title">Add Location</h2>
+      <button class="modal-close" onclick="closeLocationModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="loc-form" onsubmit="saveLocation(event)">
+        <input type="hidden" name="id">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">URL Slug <span class="req">*</span></label>
+            <input type="text" name="slug" class="form-input" required placeholder="denver-co">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Display Name <span class="req">*</span></label>
+            <input type="text" name="name" class="form-input" required placeholder="DrySolve of Denver">
+          </div>
+          <div class="form-group">
+            <label class="form-label">City <span class="req">*</span></label>
+            <input type="text" name="city" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">State <span class="req">*</span></label>
+            <input type="text" name="state" class="form-input" maxlength="2" required placeholder="CO">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone <span class="req">*</span></label>
+            <input type="text" name="phone" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-input">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Address</label>
+            <input type="text" name="address" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Latitude</label>
+            <input type="number" name="latitude" step="any" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude</label>
+            <input type="number" name="longitude" step="any" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Service Radius (miles)</label>
+            <input type="number" name="service_radius_miles" class="form-input" value="50">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Owner Name</label>
+            <input type="text" name="owner_name" class="form-input">
+          </div>
+          <div class="form-group full">
+            <label class="form-label">ZIP Codes (comma-separated)</label>
+            <textarea name="zip_codes" class="form-textarea" style="min-height:60px"></textarea>
+          </div>
+          <div class="form-group full">
+            <label class="form-label">Services (comma-separated keys)</label>
+            <input type="text" name="services" class="form-input" placeholder="water_damage,storm_damage,commercial">
+          </div>
+          <div class="form-group">
+            <label class="form-label">License #</label>
+            <input type="text" name="license_number" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Flags</label>
+            <div style="display:flex;gap:16px;padding:10px 0">
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px"><input type="checkbox" name="iicrc_certified" checked> IICRC</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px"><input type="checkbox" name="featured"> Featured</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:14px"><input type="checkbox" name="active" checked> Active</label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-navy btn-block" style="margin-top:16px">Save Location</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Franchise Inquiry Detail Modal -->
+<div class="modal-overlay" id="franchise-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Franchise Inquiry</h2>
+      <button class="modal-close" onclick="document.getElementById('franchise-modal').classList.remove('active')">×</button>
+    </div>
+    <div class="modal-body" id="franchise-modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ===== AUTH GUARD =====
+fetch('/api/admin/me').then(r => {
+  if (!r.ok) window.location.href = '/admin';
+});
+
+// ===== NAV =====
+document.querySelectorAll('.admin-nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const view = item.dataset.view;
+    document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('view-' + view).classList.add('active');
+    document.getElementById('view-title').textContent = item.textContent.trim().replace(/^.{2}\s/, '');
+    if (view === 'locations') loadLocations();
+    if (view === 'leads') loadLeads();
+    if (view === 'franchise') loadFranchise();
+  });
+});
+
+async function logout() {
+  await fetch('/api/admin/logout', { method: 'POST' });
+  window.location.href = '/admin';
+}
+
+function fmtPhone(p) {
+  if (!p) return '';
+  const d = String(p).replace(/\D/g, '').slice(-10);
+  if (d.length < 10) return p;
+  return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s + 'Z');
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+// ===== OVERVIEW =====
+async function loadStats() {
+  const r = await fetch('/api/admin/stats');
+  const s = await r.json();
+
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="label">Active Locations</div><div class="value">${s.total_locations}</div></div>
+    <div class="stat-card"><div class="label">Total Leads</div><div class="value">${s.total_leads}</div></div>
+    <div class="stat-card"><div class="label">New Leads</div><div class="value">${s.new_leads}</div><div class="delta">Awaiting action</div></div>
+    <div class="stat-card"><div class="label">Leads This Week</div><div class="value">${s.leads_this_week}</div></div>
+    <div class="stat-card"><div class="label">Franchise Inquiries</div><div class="value">${s.franchise_inquiries}</div><div class="delta">${s.new_franchise_inquiries} new</div></div>
+  `;
+
+  const recentBody = document.querySelector('#recent-leads-table tbody');
+  recentBody.innerHTML = (s.recent_leads || []).map(l => `
+    <tr>
+      <td>${fmtDate(l.created_at)}</td>
+      <td><strong>${l.name}</strong></td>
+      <td>${fmtPhone(l.phone)}</td>
+      <td>${l.service_type || '—'}</td>
+      <td>${l.location_name || '—'}</td>
+      <td><span class="badge badge-${l.status || 'new'}">${l.status || 'new'}</span></td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No leads yet</td></tr>';
+
+  const stateBody = document.getElementById('state-stats');
+  if (s.leads_by_state && s.leads_by_state.length) {
+    stateBody.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">' +
+      s.leads_by_state.map(st => `
+        <div style="background:var(--gray-50);padding:14px;border-radius:6px;text-align:center">
+          <div style="font-family:var(--font-display);font-size:24px;color:var(--orange);font-weight:800">${st.count}</div>
+          <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:var(--gray-600);margin-top:4px">${st.state}</div>
+        </div>
+      `).join('') + '</div>';
+  } else {
+    stateBody.innerHTML = '<p style="color:var(--gray-400);text-align:center">No data yet</p>';
+  }
+}
+
+// ===== LOCATIONS =====
+async function loadLocations() {
+  const r = await fetch('/api/admin/locations');
+  const { locations } = await r.json();
+  const body = document.querySelector('#locations-table tbody');
+  body.innerHTML = locations.map(loc => `
+    <tr>
+      <td>
+        <strong>${loc.name}</strong>
+        ${loc.featured ? '<span class="badge badge-active" style="margin-left:6px">FEATURED</span>' : ''}
+      </td>
+      <td>${loc.city}, ${loc.state}</td>
+      <td>${fmtPhone(loc.phone)}</td>
+      <td>${loc.lead_count || 0}</td>
+      <td><span class="badge ${loc.active ? 'badge-active' : 'badge-inactive'}">${loc.active ? 'Active' : 'Inactive'}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick='editLocation(${JSON.stringify(loc).replace(/'/g,"&#39;")})'>Edit</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No locations yet</td></tr>';
+}
+
+function openLocationModal() {
+  document.getElementById('loc-modal-title').textContent = 'Add Location';
+  document.getElementById('loc-form').reset();
+  document.querySelector('#loc-form [name=id]').value = '';
+  document.querySelector('#loc-form [name=service_radius_miles]').value = 50;
+  document.querySelector('#loc-form [name=iicrc_certified]').checked = true;
+  document.querySelector('#loc-form [name=active]').checked = true;
+  document.getElementById('loc-modal').classList.add('active');
+}
+
+function closeLocationModal() {
+  document.getElementById('loc-modal').classList.remove('active');
+}
+
+function editLocation(loc) {
+  document.getElementById('loc-modal-title').textContent = 'Edit Location';
+  const f = document.getElementById('loc-form');
+  Object.keys(loc).forEach(k => {
+    const input = f.querySelector(`[name=${k}]`);
+    if (!input) return;
+    if (input.type === 'checkbox') input.checked = !!loc[k];
+    else input.value = loc[k] ?? '';
+  });
+  document.getElementById('loc-modal').classList.add('active');
+}
+
+async function saveLocation(e) {
+  e.preventDefault();
+  const f = e.target;
+  const data = {};
+  for (const el of f.elements) {
+    if (!el.name) continue;
+    if (el.type === 'checkbox') data[el.name] = el.checked;
+    else if (el.type === 'number') data[el.name] = el.value ? parseFloat(el.value) : null;
+    else data[el.name] = el.value || null;
+  }
+  const id = data.id;
+  delete data.id;
+  const url = id ? `/api/admin/locations/${id}` : '/api/admin/locations';
+  const method = id ? 'PUT' : 'POST';
+  try {
+    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Save failed');
+    closeLocationModal();
+    loadLocations();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// ===== LEADS =====
+async function loadLeads() {
+  const status = document.getElementById('status-filter').value;
+  const r = await fetch('/api/admin/leads' + (status ? '?status=' + status : ''));
+  const { leads } = await r.json();
+  const body = document.querySelector('#leads-table tbody');
+  body.innerHTML = leads.map(l => `
+    <tr>
+      <td>${fmtDate(l.created_at)}</td>
+      <td><strong>${l.name}</strong>${l.email ? `<br><span style="font-size:12px;color:var(--gray-500)">${l.email}</span>` : ''}</td>
+      <td>${fmtPhone(l.phone)}</td>
+      <td>${l.service_type || '—'} ${l.urgency ? `<br><span style="font-size:11px;color:var(--orange);text-transform:uppercase;font-weight:700">${l.urgency}</span>` : ''}</td>
+      <td>${l.city || '—'} ${l.zip ? `<br><span style="font-size:12px;color:var(--gray-500)">${l.zip}</span>` : ''}</td>
+      <td>${l.location_name || '—'}</td>
+      <td>
+        <select onchange="updateLeadStatus(${l.id}, this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--gray-300);border-radius:4px">
+          <option value="new" ${l.status === 'new' ? 'selected' : ''}>New</option>
+          <option value="contacted" ${l.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+          <option value="won" ${l.status === 'won' ? 'selected' : ''}>Won</option>
+          <option value="lost" ${l.status === 'lost' ? 'selected' : ''}>Lost</option>
+        </select>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">No leads yet</td></tr>';
+}
+
+async function updateLeadStatus(id, status) {
+  await fetch(`/api/admin/leads/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+}
+
+// ===== FRANCHISE =====
+async function loadFranchise() {
+  const r = await fetch('/api/admin/franchise');
+  const { inquiries } = await r.json();
+  const body = document.querySelector('#franchise-table tbody');
+  body.innerHTML = inquiries.map(i => `
+    <tr>
+      <td>${fmtDate(i.created_at)}</td>
+      <td><strong>${i.first_name} ${i.last_name}</strong></td>
+      <td>${i.email}</td>
+      <td>${fmtPhone(i.phone)}</td>
+      <td>${i.target_market || '—'}</td>
+      <td>${i.liquid_capital || '—'}</td>
+      <td><span class="badge badge-${i.status || 'new'}">${i.status || 'new'}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick='viewFranchise(${JSON.stringify(i).replace(/'/g,"&#39;")})'>View</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--gray-400);padding:32px">No inquiries yet</td></tr>';
+}
+
+function viewFranchise(i) {
+  document.getElementById('franchise-modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Name</strong><div>${i.first_name} ${i.last_name}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Email</strong><div><a href="mailto:${i.email}">${i.email}</a></div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Phone</strong><div><a href="tel:${i.phone}">${fmtPhone(i.phone)}</a></div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Submitted</strong><div>${fmtDate(i.created_at)}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Address</strong><div>${i.address || '—'}<br>${i.city || ''}, ${i.state || ''} ${i.zip || ''}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Target Market</strong><div>${i.target_market || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Liquid Capital</strong><div>${i.liquid_capital || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Net Worth</strong><div>${i.net_worth || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Timeline</strong><div>${i.timeline || '—'}</div></div>
+      <div><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Experience</strong><div>${i.industry_experience || '—'}</div></div>
+      <div style="grid-column:1/-1"><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Source</strong><div>${i.referral_source || '—'}</div></div>
+      <div style="grid-column:1/-1"><strong style="color:var(--gray-500);font-size:12px;text-transform:uppercase">Message</strong><div style="background:var(--gray-50);padding:12px;border-radius:6px;margin-top:4px">${i.message || '—'}</div></div>
+    </div>
+    <div class="form-grid" style="border-top:1px solid var(--gray-200);padding-top:20px">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="fr-status" class="form-select">
+          <option value="new" ${i.status === 'new' ? 'selected' : ''}>New</option>
+          <option value="contacted" ${i.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+          <option value="qualified" ${i.status === 'qualified' ? 'selected' : ''}>Qualified</option>
+          <option value="won" ${i.status === 'won' ? 'selected' : ''}>Won</option>
+          <option value="lost" ${i.status === 'lost' ? 'selected' : ''}>Lost</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Internal Notes</label>
+        <textarea id="fr-notes" class="form-textarea">${i.notes || ''}</textarea>
+      </div>
+    </div>
+    <button class="btn btn-navy btn-block" onclick="saveFranchise(${i.id})">Save</button>
+  `;
+  document.getElementById('franchise-modal').classList.add('active');
+}
+
+async function saveFranchise(id) {
+  await fetch(`/api/admin/franchise/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      status: document.getElementById('fr-status').value,
+      notes: document.getElementById('fr-notes').value
+    })
+  });
+  document.getElementById('franchise-modal').classList.remove('active');
+  loadFranchise();
+}
+
+// Init
+loadStats();
+</script>
+
+</body>
+</html>

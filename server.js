@@ -1,0 +1,71 @@
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Trust proxy - REQUIRED for Railway/Twilio webhooks
+app.set('trust proxy', 1);
+
+// Middleware
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rate limiting for forms
+const formLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// Routes
+const locationRoutes = require('./routes/locations');
+const leadRoutes = require('./routes/leads');
+const franchiseRoutes = require('./routes/franchise');
+const adminRoutes = require('./routes/admin');
+const geoRoutes = require('./routes/geo');
+
+app.use('/api/locations', locationRoutes);
+app.use('/api/leads', formLimiter, leadRoutes);
+app.use('/api/franchise', formLimiter, franchiseRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/geo', geoRoutes);
+
+// Page routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/services/water-damage', (req, res) => res.sendFile(path.join(__dirname, 'public', 'water-damage.html')));
+app.get('/services/storm-damage', (req, res) => res.sendFile(path.join(__dirname, 'public', 'storm-damage.html')));
+app.get('/services/commercial', (req, res) => res.sendFile(path.join(__dirname, 'public', 'commercial.html')));
+app.get('/franchise', (req, res) => res.sendFile(path.join(__dirname, 'public', 'franchise.html')));
+app.get('/contact', (req, res) => res.sendFile(path.join(__dirname, 'public', 'contact.html')));
+app.get('/locations', (req, res) => res.sendFile(path.join(__dirname, 'public', 'locations.html')));
+app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
+
+// Admin
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'login.html')));
+app.get('/admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'dashboard.html')));
+
+// Location detail pages (dynamic)
+app.get('/locations/:slug', (req, res) => res.sendFile(path.join(__dirname, 'public', 'location-detail.html')));
+
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'DrySolve Restoration' }));
+
+// Sitemap
+app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'public', 'sitemap.xml')));
+app.get('/robots.txt', (req, res) => res.sendFile(path.join(__dirname, 'public', 'robots.txt')));
+
+// 404
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`🌊 DrySolve Restoration running on port ${PORT}`);
+});

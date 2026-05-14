@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login | DrySolve Restoration</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  body { background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .login-card { background: var(--white); padding: 48px; border-radius: 12px; box-shadow: var(--shadow-xl); width: 100%; max-width: 420px; }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo .logo-mark { display: inline-flex; width: 60px; height: 60px; margin-bottom: 12px; }
+  .login-logo h1 { font-size: 28px; }
+  .login-error { background: #fee2e2; border: 2px solid #ef4444; color: #991b1b; padding: 12px; border-radius: var(--radius); margin-bottom: 16px; display: none; font-size: 14px; }
+  .login-error.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-logo">
+    <div class="logo-mark" style="width:64px;height:64px;font-family:var(--font-display);font-size:24px;font-weight:800">DS</div>
+    <h1>DrySolve Admin</h1>
+    <p style="color:var(--gray-500);font-size:14px;margin-top:4px">Sign in to manage locations and leads</p>
+  </div>
+
+  <div class="login-error" id="error"></div>
+
+  <form id="login-form">
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input type="text" name="username" class="form-input" required autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" name="password" class="form-input" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn btn-navy btn-block" id="submit-btn">Sign In</button>
+  </form>
+
+  <p style="text-align:center;margin-top:24px;font-size:13px;color:var(--gray-400)">
+    <a href="/" style="color:var(--gray-500)">← Back to drysolverestoration.com</a>
+  </p>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  const err = document.getElementById('error');
+  const btn = document.getElementById('submit-btn');
+  err.classList.remove('active');
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Login failed');
+    window.location.href = '/admin/dashboard';
+  } catch (e) {
+    err.textContent = e.message;
+    err.classList.add('active');
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+});
+</script>
+
+</body>
+</html>

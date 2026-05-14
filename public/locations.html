@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Your Local DrySolve | Locations Nationwide</title>
+<meta name="description" content="Find your nearest DrySolve Restoration location. 24/7 emergency response, IICRC-certified crews, serving cities across the United States.">
+<link rel="canonical" href="https://drysolverestoration.com/locations">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div class="emergency-bar">
+  <span class="pulse"></span>
+  24/7 EMERGENCY: <a href="tel:+17207706366">(720) 770-6366</a>
+</div>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo"><div class="logo-mark">DS</div><span class="logo-text">DrySolve<span>.</span></span></a>
+    <nav class="nav">
+      <a href="/services/water-damage" class="nav-link">Water Damage</a>
+      <a href="/services/storm-damage" class="nav-link">Storm Damage</a>
+      <a href="/services/commercial" class="nav-link">Commercial</a>
+      <a href="/locations" class="nav-link">Locations</a>
+      <a href="/franchise" class="nav-link">Franchise</a>
+      <a href="/about" class="nav-link">About</a>
+      <a href="tel:+17207706366" class="nav-cta">(720) 770-6366</a>
+    </nav>
+    <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<section class="page-hero">
+  <div class="container page-hero-inner">
+    <span class="eyebrow" style="color:var(--orange)">DRYSOLVE LOCATIONS</span>
+    <h1>Find Your Local DrySolve</h1>
+    <p>Locally owned. Nationally backed. Find the DrySolve team serving your area.</p>
+  </div>
+</section>
+
+<div class="breadcrumb">
+  <div class="container">
+    <a href="/">Home</a><span class="sep">›</span><span>Locations</span>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container" style="max-width:900px">
+
+    <!-- Location finder card -->
+    <div id="location-finder" class="location-finder" style="margin-bottom:48px">
+      <div id="lf-detected-banner" class="lf-detected-banner" style="display:none"></div>
+      <div class="lf-title">Search By ZIP Code</div>
+      <div class="lf-subtitle">We'll route you to the closest DrySolve team in your area.</div>
+      <div class="lf-input-group">
+        <input type="text" id="lf-zip" class="lf-input" placeholder="Enter ZIP code" maxlength="5" inputmode="numeric">
+        <button class="lf-go-btn" id="lf-go">GO →</button>
+      </div>
+      <button class="lf-geo-btn" id="lf-geo">📍 Use my current location</button>
+      <div id="lf-result" class="lf-result"></div>
+    </div>
+
+    <!-- All locations list -->
+    <h2 style="margin-bottom:24px">All DrySolve Locations</h2>
+    <div id="locations-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px"></div>
+
+    <div style="text-align:center;margin-top:64px;padding:48px;background:var(--gray-50);border-radius:12px">
+      <h3 style="margin-bottom:12px">Don't See Your City?</h3>
+      <p style="margin-bottom:24px;color:var(--gray-600)">We're expanding rapidly. Call us — we may already serve your area through our network, or you could be a great fit for franchise ownership.</p>
+      <a href="tel:+17207706366" class="btn btn-primary" style="margin-right:8px">Call (720) 770-6366</a>
+      <a href="/franchise" class="btn btn-outline">Explore Franchising</a>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="logo"><div class="logo-mark">DS</div><span class="logo-text">DrySolve<span>.</span></span></a>
+        <p>Locally owned restoration franchises delivering rapid response and certified expertise, 24/7 nationwide.</p>
+        <a href="tel:+17207706366" class="footer-phone">(720) 770-6366</a>
+      </div>
+      <div><h4>Services</h4><ul><li><a href="/services/water-damage">Water Damage</a></li><li><a href="/services/storm-damage">Storm Damage</a></li><li><a href="/services/commercial">Commercial</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="/about">About</a></li><li><a href="/locations">Locations</a></li><li><a href="/franchise">Own a Franchise</a></li><li><a href="/contact">Contact</a></li></ul></div>
+      <div><h4>24/7 Emergency</h4><ul><li><a href="tel:+17207706366">(720) 770-6366</a></li><li>Insurance approved</li><li>IICRC certified</li></ul></div>
+    </div>
+    <div class="footer-bottom"><div>© 2026 DrySolve Restoration.</div><div><a href="/contact">Contact</a> · <a href="/franchise">Franchise</a></div></div>
+  </div>
+</footer>
+
+<script src="/site.js"></script>
+<script>
+fetch('/api/locations').then(r => r.json()).then(data => {
+  const list = document.getElementById('locations-list');
+  if (!data.locations || data.locations.length === 0) {
+    list.innerHTML = '<p style="color:var(--gray-500)">No locations available yet.</p>';
+    return;
+  }
+  list.innerHTML = data.locations.map(loc => {
+    const phoneDigits = (loc.phone || '').replace(/\D/g, '');
+    const phoneFmt = phoneDigits.length >= 10 ? `(${phoneDigits.slice(-10,-7)}) ${phoneDigits.slice(-7,-4)}-${phoneDigits.slice(-4)}` : loc.phone;
+    return `
+      <a href="/locations/${loc.slug}" style="text-decoration:none;color:inherit">
+        <div style="background:var(--white);border:2px solid var(--gray-200);border-radius:12px;padding:24px;transition:all 0.2s;cursor:pointer" onmouseover="this.style.borderColor='var(--orange)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--gray-200)';this.style.transform=''">
+          <div style="font-family:var(--font-display);font-size:13px;color:var(--orange);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">${loc.state}</div>
+          <h3 style="font-size:20px;margin-bottom:8px">${loc.name}</h3>
+          <div style="color:var(--gray-500);font-size:14px;margin-bottom:12px">${loc.city}, ${loc.state}</div>
+          <div style="color:var(--orange);font-weight:700;font-size:18px">${phoneFmt}</div>
+        </div>
+      </a>
+    `;
+  }).join('');
+});
+</script>
+</body>
+</html>
