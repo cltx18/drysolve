@@ -42,10 +42,21 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 app.get('/services/water-damage', (req, res) => res.sendFile(path.join(__dirname, 'public', 'water-damage.html')));
 app.get('/services/storm-damage', (req, res) => res.sendFile(path.join(__dirname, 'public', 'storm-damage.html')));
 app.get('/services/commercial', (req, res) => res.sendFile(path.join(__dirname, 'public', 'commercial.html')));
-app.get('/franchise', (req, res) => res.sendFile(path.join(__dirname, 'public', 'franchise.html')));
 app.get('/contact', (req, res) => res.sendFile(path.join(__dirname, 'public', 'contact.html')));
-app.get('/locations', (req, res) => res.sendFile(path.join(__dirname, 'public', 'locations.html')));
 app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
+
+// Resources
+app.get('/resources', (req, res) => res.sendFile(path.join(__dirname, 'public', 'resources.html')));
+app.get(['/faq', '/resources/faq'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'faq.html')));
+app.get(['/insurance-claims', '/resources/insurance-claims'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'insurance-claims.html')));
+app.get(['/service-areas', '/resources/service-areas'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'service-areas.html')));
+app.get(['/glossary', '/resources/glossary'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'glossary.html')));
+
+// Legal
+app.get('/legal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'legal.html')));
+app.get(['/privacy', '/legal/privacy'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
+app.get(['/terms', '/legal/terms'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')));
+app.get(['/accessibility', '/legal/accessibility'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'accessibility.html')));
 
 // Admin
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'login.html')));

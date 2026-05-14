@@ -85,7 +85,7 @@ In Railway → Variables tab, add:
 | `PORT` | `3000` |
 | `NODE_ENV` | `production` |
 | `DB_PATH` | `/data/drysolve.db` |
-| `TWILIO_PHONE` | `+17207706366` |
+| `TWILIO_PHONE` | `+17207613601` |
 | `ADMIN_PASSWORD` | Strong password |
 | `JWT_SECRET` | Long random string (32+ chars) |
 | `GHL_LEAD_WEBHOOK` | Your GHL inbound webhook URL for leads |

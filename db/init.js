@@ -110,11 +110,11 @@ if (existing.count === 0) {
     'Denver',
     'CO',
     '80014,80016,80017,80022,80031,80123,80127,80202,80203,80204,80205,80206,80207,80209,80210,80211,80212,80214,80215,80216,80218,80219,80220,80221,80222,80223,80224,80226,80227,80228,80229,80230,80231,80232,80233,80234,80235,80236,80237,80238,80239,80246,80247,80249',
-    process.env.TWILIO_PHONE || '+17207706366',
+    process.env.TWILIO_PHONE || '+17207613601',
     'denver@drysolverestoration.com',
-    'Denver, CO',
-    39.7392,
-    -104.9903,
+    '1000 E 73rd Ave Ste. 7309, Denver, CO 80229',
+    39.8237,
+    -104.9772,
     50,
     'water_damage,storm_damage,commercial',
     'Logan',
@@ -123,6 +123,13 @@ if (existing.count === 0) {
 
   console.log('✓ Seeded flagship Denver location');
 }
+
+// Migration: ensure Denver location has the correct street address (idempotent)
+db.prepare(`
+  UPDATE locations
+  SET address = ?, latitude = ?, longitude = ?
+  WHERE slug = 'denver-co'
+`).run('1000 E 73rd Ave Ste. 7309, Denver, CO 80229', 39.8237, -104.9772);
 
 // Seed admin user
 const adminExists = db.prepare('SELECT COUNT(*) as count FROM admin_users').get();

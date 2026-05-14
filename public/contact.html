@@ -9,13 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
 <div class="emergency-bar">
   <span class="pulse"></span>
-  24/7 EMERGENCY: <a href="tel:+17207706366">(720) 770-6366</a>
+  24/7 EMERGENCY: <a href="tel:+17207613601">(720) 761-3601</a>
 </div>
 
 <header class="header">
@@ -25,10 +26,11 @@
       <a href="/services/water-damage" class="nav-link">Water Damage</a>
       <a href="/services/storm-damage" class="nav-link">Storm Damage</a>
       <a href="/services/commercial" class="nav-link">Commercial</a>
-      <a href="/locations" class="nav-link">Locations</a>
-      <a href="/franchise" class="nav-link">Franchise</a>
+
+
+      <a href="/resources" class="nav-link">Resources</a>
       <a href="/about" class="nav-link">About</a>
-      <a href="tel:+17207706366" class="nav-cta">(720) 770-6366</a>
+      <a href="tel:+17207613601" class="nav-cta">(720) 761-3601</a>
     </nav>
     <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
   </div>
@@ -53,7 +55,7 @@
 
       <div style="margin-bottom:32px">
         <div style="font-family:var(--font-display);font-size:13px;color:var(--orange);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">24/7 Emergency Line</div>
-        <a href="tel:+17207706366" style="font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--navy);text-decoration:none">(720) 770-6366</a>
+        <a href="tel:+17207613601" style="font-family:var(--font-display);font-size:36px;font-weight:800;color:var(--navy);text-decoration:none">(720) 761-3601</a>
         <p style="color:var(--gray-600);margin-top:8px">Active water? Storm damage? Call now — crews dispatched within 60 minutes.</p>
       </div>
 
@@ -64,7 +66,11 @@
 
       <div style="margin-bottom:32px">
         <div style="font-family:var(--font-display);font-size:13px;color:var(--orange);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Headquarters</div>
-        <p style="font-size:16px;color:var(--navy)">Denver, Colorado<br>Serving the U.S. via our franchise network</p>
+        <p style="font-size:16px;color:var(--navy);line-height:1.5">
+          1000 E 73rd Ave Ste. 7309<br>
+          Denver, Colorado 80229
+        </p>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=1000+E+73rd+Ave+Ste+7309+Denver+CO+80229" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--orange)">Get Directions →</a>
       </div>
 
       <div style="background:var(--gray-50);border-radius:12px;padding:24px;border-left:4px solid var(--orange)">
@@ -109,7 +115,6 @@
               <option value="water_damage">Water damage</option>
               <option value="storm_damage">Storm damage</option>
               <option value="commercial">Commercial / property management</option>
-              <option value="franchise">Franchise inquiry</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -124,22 +129,33 @@
   </div>
 </section>
 
-<footer class="footer">
+<!-- LOCATION MAP -->
+<section class="section" style="padding-top:0">
   <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="/" class="logo"><div class="logo-mark">DS</div><span class="logo-text">DrySolve<span>.</span></span></a>
-        <p>Locally owned restoration franchises delivering rapid response and certified expertise, 24/7 nationwide.</p>
-        <a href="tel:+17207706366" class="footer-phone">(720) 770-6366</a>
+    <div style="background:var(--white);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md);border:1px solid var(--gray-200)">
+      <div style="padding:24px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;border-bottom:1px solid var(--gray-200)">
+        <div>
+          <div style="font-family:var(--font-display);font-size:13px;color:var(--orange);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">Visit Our Headquarters</div>
+          <h3 style="margin:0;font-size:22px">1000 E 73rd Ave Ste. 7309, Denver, CO 80229</h3>
+        </div>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=1000+E+73rd+Ave+Ste+7309+Denver+CO+80229" target="_blank" rel="noopener" class="btn btn-primary">📍 Get Directions</a>
       </div>
-      <div><h4>Services</h4><ul><li><a href="/services/water-damage">Water Damage</a></li><li><a href="/services/storm-damage">Storm Damage</a></li><li><a href="/services/commercial">Commercial</a></li></ul></div>
-      <div><h4>Company</h4><ul><li><a href="/about">About</a></li><li><a href="/locations">Locations</a></li><li><a href="/franchise">Own a Franchise</a></li><li><a href="/contact">Contact</a></li></ul></div>
-      <div><h4>24/7 Emergency</h4><ul><li><a href="tel:+17207706366">(720) 770-6366</a></li><li>Insurance approved</li><li>IICRC certified</li></ul></div>
+      <iframe
+        src="https://www.google.com/maps?q=1000+E+73rd+Ave+Ste+7309+Denver+CO+80229&output=embed"
+        width="100%"
+        height="450"
+        style="border:0;display:block"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="DrySolve Restoration Denver Location">
+      </iframe>
     </div>
-    <div class="footer-bottom"><div>© 2026 DrySolve Restoration.</div><div><a href="/contact">Contact</a> · <a href="/franchise">Franchise</a></div></div>
   </div>
-</footer>
+</section>
+
+<footer class="footer" id="site-footer"></footer>
 
 <script src="/site.js"></script>
+<script src="/footer.js"></script>
 </body>
 </html>

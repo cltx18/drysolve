@@ -79,7 +79,7 @@ function renderNearest(data) {
   const resultEl = document.getElementById('lf-result');
   if (!resultEl) return;
   if (!data.nearest) {
-    resultEl.innerHTML = `<div class="lf-result-card"><div class="city">No location found yet</div><p style="color:#64748b;font-size:14px;margin-top:8px">Call us — we're rapidly expanding and may already serve your area.</p><a href="tel:+17207706366" class="phone">(720) 770-6366</a></div>`;
+    resultEl.innerHTML = `<div class="lf-result-card"><div class="city">No location found yet</div><p style="color:#64748b;font-size:14px;margin-top:8px">Call us — we're rapidly expanding and may already serve your area.</p><a href="tel:+17207613601" class="phone">(720) 761-3601</a></div>`;
     resultEl.classList.add('active');
     return;
   }
