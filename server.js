@@ -84,6 +84,7 @@ app.get('/analytics-config.js', (req, res) => {
     adsId: process.env.GOOGLE_ADS_ID || null,
     gtmId: process.env.GTM_CONTAINER_ID || null,
     ga4Id: process.env.GA4_MEASUREMENT_ID || null,
+    clarityId: process.env.CLARITY_PROJECT_ID || 'wqusmpw24t',
     conversions
   };
   res.type('application/javascript');

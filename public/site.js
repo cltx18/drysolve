@@ -86,12 +86,28 @@ function renderNearest(data) {
   const n = data.nearest;
   const phoneHref = (n.phone || '').replace(/\D/g, '');
   const inService = data.in_service_area;
+  // Build map source: prefer lat/lng; fall back to name + city/state query
+  const mapQuery = (n.latitude && n.longitude)
+    ? `${n.latitude},${n.longitude}`
+    : encodeURIComponent(`DrySolve Restoration ${n.city || ''} ${n.state || ''}`);
+  const mapSrc = `https://maps.google.com/maps?q=${mapQuery}&z=12&output=embed`;
   resultEl.innerHTML = `
     <div class="lf-result-card">
       <div class="city">${n.name}</div>
       <div class="distance">${Math.round(n.distance)} miles away ${inService ? '— in your service area' : '— outside primary service area'}</div>
       <a href="tel:+1${phoneHref}" class="phone">${formatPhone(n.phone)}</a>
-      <a href="/locations/${n.slug}" class="btn btn-outline" style="margin-top:8px;font-size:14px;padding:10px 18px;">View Location Details</a>
+      <div class="lf-map-wrap">
+        <iframe
+          src="${mapSrc}"
+          width="100%"
+          height="220"
+          style="border:0;border-radius:8px;margin-top:12px;display:block"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="${n.name} location map"
+          allowfullscreen></iframe>
+        <a href="https://maps.google.com/maps?q=${mapQuery}" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:8px;font-size:13px;padding:8px 16px;">Get Directions</a>
+      </div>
     </div>
   `;
   resultEl.classList.add('active');

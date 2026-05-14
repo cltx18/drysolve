@@ -46,6 +46,16 @@
     gtagIds.forEach(id => gtag('config', id, { send_page_view: true }));
   }
 
+  // --- Load Microsoft Clarity (heatmaps + session recording) ------------
+  const clarityId = cfg.clarityId || null;
+  if (clarityId) {
+    (function(c, l, a, r, i, t, y) {
+      c[a] = c[a] || function() { (c[a].q = c[a].q || []).push(arguments); };
+      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", clarityId);
+  }
+
   // --- Capture GCLID from URL on landing ------------------------------
   // GCLID = Google Click Identifier. Required for server-side offline conversion uploads.
   // We capture from URL and stash in localStorage with 90-day expiry (Google Ads attribution window).
