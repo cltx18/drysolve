@@ -178,10 +178,30 @@ router.get('/leads', requireAuth, (req, res) => {
   res.json({ leads });
 });
 
-router.put('/leads/:id', requireAuth, (req, res) => {
+// Conversion value map by status (USD)
+const CONVERSION_VALUES = {
+  contacted: 50,
+  qualified: 250,
+  scheduled: 500,
+  won: 2500,  // average residential water-damage job value
+};
+
+router.put('/leads/:id', requireAuth, async (req, res) => {
   const { status, location_id } = req.body;
   if (status) {
     db.prepare('UPDATE leads SET status = ? WHERE id = ?').run(status, req.params.id);
+
+    // Upload offline conversion to Google Ads if this status has a value mapping
+    if (CONVERSION_VALUES[status]) {
+      try {
+        const ga = require('../lib/google-ads');
+        const actionKey = status === 'won' ? 'won_deal' : 'qualified_lead';
+        ga.uploadLeadConversion(parseInt(req.params.id), actionKey, CONVERSION_VALUES[status])
+          .catch(err => console.error('[GoogleAds] async upload error:', err.message));
+      } catch (e) {
+        console.error('[GoogleAds] module load error:', e.message);
+      }
+    }
   }
   if (location_id) {
     db.prepare('UPDATE leads SET location_id = ? WHERE id = ?').run(location_id, req.params.id);

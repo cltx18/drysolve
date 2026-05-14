@@ -70,6 +70,27 @@ app.get('/locations/:slug', (req, res) => res.sendFile(path.join(__dirname, 'pub
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', service: 'DrySolve Restoration' }));
 
+// Analytics config endpoint — injects gtag/GTM IDs from env vars
+app.get('/analytics-config.js', (req, res) => {
+  const conversions = {};
+  try {
+    if (process.env.GOOGLE_ADS_CONVERSIONS) {
+      Object.assign(conversions, JSON.parse(process.env.GOOGLE_ADS_CONVERSIONS));
+    }
+  } catch (e) {
+    console.warn('Invalid GOOGLE_ADS_CONVERSIONS JSON:', e.message);
+  }
+  const cfg = {
+    adsId: process.env.GOOGLE_ADS_ID || null,
+    gtmId: process.env.GTM_CONTAINER_ID || null,
+    ga4Id: process.env.GA4_MEASUREMENT_ID || null,
+    conversions
+  };
+  res.type('application/javascript');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  res.send(`window.DS_ANALYTICS = ${JSON.stringify(cfg)};`);
+});
+
 // Sitemap
 app.get('/sitemap.xml', (req, res) => res.sendFile(path.join(__dirname, 'public', 'sitemap.xml')));
 app.get('/robots.txt', (req, res) => res.sendFile(path.join(__dirname, 'public', 'robots.txt')));

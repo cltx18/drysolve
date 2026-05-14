@@ -139,10 +139,24 @@ router.post('/dial-status', (req, res) => {
       AnsweredBy || null,
       CallSid
     );
+
+    // Fire Google Ads call conversion for answered calls lasting >30s (not voicemail spam)
+    const dur = DialCallDuration ? parseInt(DialCallDuration) : 0;
+    if (DialCallStatus === 'completed' && dur >= 30) {
+      const call = db.prepare('SELECT id FROM calls WHERE call_sid = ?').get(CallSid);
+      if (call) {
+        try {
+          const ga = require('../lib/google-ads');
+          ga.uploadCallConversion(call.id, 250)
+            .catch(err => console.error('[GoogleAds] call upload error:', err.message));
+        } catch (e) {
+          console.error('[GoogleAds] module load error:', e.message);
+        }
+      }
+    }
   } catch (err) {
     console.error('[Twilio] dial-status DB error:', err.message);
   }
-  // Empty TwiML keeps the call flow ending after Dial (or falls through to voicemail if Dial failed)
   res.type('text/xml').send('<?xml version="1.0" encoding="UTF-8"?><Response/>');
 });
 

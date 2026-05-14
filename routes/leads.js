@@ -8,14 +8,14 @@ router.post('/', async (req, res) => {
   try {
     const {
       name, phone, email, address, city, state, zip,
-      service_type, urgency, message, source
+      service_type, urgency, message, source,
+      gclid, utm_source, utm_medium, utm_campaign, utm_term, utm_content
     } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ error: 'Name and phone required' });
     }
 
-    // Find best location to assign lead based on zip/city
     let location_id = null;
     if (zip) {
       const zipMatch = db.prepare(`
@@ -33,25 +33,25 @@ router.post('/', async (req, res) => {
     }
 
     const result = db.prepare(`
-      INSERT INTO leads (location_id, name, phone, email, address, city, state, zip, service_type, urgency, message, source, ip_address)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO leads (
+        location_id, name, phone, email, address, city, state, zip,
+        service_type, urgency, message, source, ip_address,
+        gclid, utm_source, utm_medium, utm_campaign, utm_term, utm_content
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       location_id,
-      name,
-      phone,
-      email || null,
-      address || null,
-      city || null,
-      state || null,
-      zip || null,
-      service_type || null,
-      urgency || null,
-      message || null,
+      name, phone,
+      email || null, address || null,
+      city || null, state || null, zip || null,
+      service_type || null, urgency || null, message || null,
       source || 'website',
-      req.ip
+      req.ip,
+      gclid || null,
+      utm_source || null, utm_medium || null, utm_campaign || null,
+      utm_term || null, utm_content || null
     );
 
-    // Forward to GoHighLevel webhook if configured
     if (process.env.GHL_LEAD_WEBHOOK) {
       try {
         await axios.post(process.env.GHL_LEAD_WEBHOOK, {
@@ -62,6 +62,8 @@ router.post('/', async (req, res) => {
           full_name: name,
           phone, email, address, city, state, zip,
           service_type, urgency, message,
+          gclid: gclid || null,
+          utm_source, utm_medium, utm_campaign,
           source: 'drysolverestoration.com'
         }, { timeout: 5000 });
       } catch (e) {
@@ -71,6 +73,7 @@ router.post('/', async (req, res) => {
 
     res.json({
       success: true,
+      id: result.lastInsertRowid,
       lead_id: result.lastInsertRowid,
       message: 'A DrySolve specialist will contact you within minutes.'
     });

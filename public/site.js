@@ -116,6 +116,10 @@ async function submitForm(formEl, endpoint, successMsg) {
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
 
   try {
+    // Attach GCLID for server-side offline conversion attribution
+    if (window.dsAnalytics && window.dsAnalytics.capturedGclid) {
+      data.gclid = window.dsAnalytics.capturedGclid;
+    }
     const r = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -128,7 +132,16 @@ async function submitForm(formEl, endpoint, successMsg) {
       successEl.classList.add('active');
     }
     formEl.reset();
-    if (window.gtag) gtag('event', 'form_submit', { event_category: 'lead', event_label: endpoint });
+    // Fire Google Ads conversion
+    if (window.dsAnalytics) {
+      window.dsAnalytics.trackConversion('lead_form', {
+        value: 1,
+        transaction_id: json.id ? 'lead-' + json.id : undefined,
+        extra: { form_endpoint: endpoint, service_type: data.service_type || 'general' }
+      });
+    } else if (window.gtag) {
+      gtag('event', 'form_submit', { event_category: 'lead', event_label: endpoint });
+    }
   } catch (err) {
     if (errorEl) { errorEl.textContent = err.message; errorEl.classList.add('active'); }
   } finally {

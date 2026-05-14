@@ -60,6 +60,13 @@ db.exec(`
     source TEXT DEFAULT 'website',
     status TEXT DEFAULT 'new',
     ip_address TEXT,
+    gclid TEXT,
+    utm_source TEXT,
+    utm_medium TEXT,
+    utm_campaign TEXT,
+    utm_term TEXT,
+    utm_content TEXT,
+    conversion_uploaded INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (location_id) REFERENCES locations(id)
   );
@@ -140,6 +147,24 @@ for (const col of profileLinkCols) {
   if (!existingCols.includes(col)) {
     db.exec(`ALTER TABLE locations ADD COLUMN ${col} TEXT`);
     console.log(`✓ Added column locations.${col}`);
+  }
+}
+
+// Migration: add attribution columns to existing leads table (idempotent)
+const leadAttrCols = {
+  gclid: 'TEXT',
+  utm_source: 'TEXT',
+  utm_medium: 'TEXT',
+  utm_campaign: 'TEXT',
+  utm_term: 'TEXT',
+  utm_content: 'TEXT',
+  conversion_uploaded: 'INTEGER DEFAULT 0'
+};
+const existingLeadCols = db.prepare("PRAGMA table_info(leads)").all().map(c => c.name);
+for (const [col, type] of Object.entries(leadAttrCols)) {
+  if (!existingLeadCols.includes(col)) {
+    db.exec(`ALTER TABLE leads ADD COLUMN ${col} ${type}`);
+    console.log(`✓ Added column leads.${col}`);
   }
 }
 
