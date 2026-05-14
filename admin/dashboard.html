@@ -122,7 +122,7 @@
         </div>
         <div class="panel-body" style="padding:0;overflow-x:auto">
           <table class="table" id="locations-table">
-            <thead><tr><th>Name</th><th>City, State</th><th>Phone</th><th>Leads</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>City, State</th><th>Phone</th><th>Leads</th><th>Profiles</th><th>Status</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -267,6 +267,35 @@
             </div>
           </div>
         </div>
+
+        <!-- INTERNAL PROFILE LINKS -->
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--gray-200)">
+          <h3 style="font-size:15px;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-500);margin-bottom:4px;font-family:var(--font-display)">Profile Links</h3>
+          <p style="font-size:12px;color:var(--gray-500);margin-bottom:16px">Internal links for franchise account management. Not shown publicly.</p>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">⭐ Yelp Business URL</label>
+              <input type="url" name="yelp_url" class="form-input" placeholder="https://www.yelp.com/biz/your-listing">
+            </div>
+            <div class="form-group">
+              <label class="form-label">🔧 Angi Profile URL</label>
+              <input type="url" name="angi_url" class="form-input" placeholder="https://www.angi.com/companylist/...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">📍 33 Mile Radius URL</label>
+              <input type="url" name="thirtythree_mile_url" class="form-input" placeholder="https://app.33mileradius.com/...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">📋 Inquirly URL</label>
+              <input type="url" name="inquirly_url" class="form-input" placeholder="https://app.inquirly.com/...">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">🗂️ Trello Board URL</label>
+              <input type="url" name="trello_url" class="form-input" placeholder="https://trello.com/b/your-board-id">
+            </div>
+          </div>
+        </div>
+
         <button type="submit" class="btn btn-navy btn-block" style="margin-top:16px">Save Location</button>
       </form>
     </div>
@@ -367,7 +396,18 @@ async function loadLocations() {
   const r = await fetch('/api/admin/locations');
   const { locations } = await r.json();
   const body = document.querySelector('#locations-table tbody');
-  body.innerHTML = locations.map(loc => `
+  body.innerHTML = locations.map(loc => {
+    const linkBadge = (url, label) => url
+      ? `<a href="${url}" target="_blank" rel="noopener" title="${label}: ${url}" style="display:inline-block;padding:3px 7px;background:var(--orange);color:white;border-radius:4px;font-size:11px;font-weight:700;text-decoration:none;margin-right:4px">${label}</a>`
+      : `<span title="${label}: not set" style="display:inline-block;padding:3px 7px;background:var(--gray-100);color:var(--gray-400);border-radius:4px;font-size:11px;font-weight:700;margin-right:4px">${label}</span>`;
+    const linksHtml = `
+      ${linkBadge(loc.yelp_url, 'Yelp')}
+      ${linkBadge(loc.angi_url, 'Angi')}
+      ${linkBadge(loc.thirtythree_mile_url, '33M')}
+      ${linkBadge(loc.inquirly_url, 'Inq')}
+      ${linkBadge(loc.trello_url, 'Trello')}
+    `;
+    return `
     <tr>
       <td>
         <strong>${loc.name}</strong>
@@ -376,10 +416,11 @@ async function loadLocations() {
       <td>${loc.city}, ${loc.state}</td>
       <td>${fmtPhone(loc.phone)}</td>
       <td>${loc.lead_count || 0}</td>
+      <td style="white-space:nowrap">${linksHtml}</td>
       <td><span class="badge ${loc.active ? 'badge-active' : 'badge-inactive'}">${loc.active ? 'Active' : 'Inactive'}</span></td>
       <td><button class="btn btn-outline btn-sm" onclick='editLocation(${JSON.stringify(loc).replace(/'/g,"&#39;")})'>Edit</button></td>
     </tr>
-  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px">No locations yet</td></tr>';
+  `;}).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px">No locations yet</td></tr>';
 }
 
 function openLocationModal() {

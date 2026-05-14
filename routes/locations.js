@@ -81,7 +81,12 @@ router.get('/nearest', async (req, res) => {
 // GET /api/locations/:slug - single location detail
 router.get('/:slug', (req, res) => {
   try {
-    const loc = db.prepare('SELECT * FROM locations WHERE slug = ? AND active = 1').get(req.params.slug);
+    const loc = db.prepare(`
+      SELECT id, slug, name, city, state, zip_codes, phone, email, address,
+             latitude, longitude, service_radius_miles, services, owner_name,
+             license_number, iicrc_certified, featured
+      FROM locations WHERE slug = ? AND active = 1
+    `).get(req.params.slug);
     if (!loc) return res.status(404).json({ error: 'Location not found' });
     loc.services = loc.services ? loc.services.split(',') : [];
     loc.zip_codes = loc.zip_codes ? loc.zip_codes.split(',') : [];

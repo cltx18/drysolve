@@ -86,7 +86,8 @@ router.post('/locations', requireAuth, (req, res) => {
     const {
       slug, name, city, state, zip_codes, phone, email, address,
       latitude, longitude, service_radius_miles, services, owner_name,
-      license_number, iicrc_certified, featured
+      license_number, iicrc_certified, featured,
+      yelp_url, angi_url, thirtythree_mile_url, inquirly_url, trello_url
     } = req.body;
 
     if (!slug || !name || !city || !state || !phone) {
@@ -96,14 +97,17 @@ router.post('/locations', requireAuth, (req, res) => {
     const result = db.prepare(`
       INSERT INTO locations
       (slug, name, city, state, zip_codes, phone, email, address, latitude, longitude,
-       service_radius_miles, services, owner_name, license_number, iicrc_certified, featured)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       service_radius_miles, services, owner_name, license_number, iicrc_certified, featured,
+       yelp_url, angi_url, thirtythree_mile_url, inquirly_url, trello_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       slug, name, city, state, zip_codes || null, phone, email || null, address || null,
       latitude || null, longitude || null, service_radius_miles || 50,
       Array.isArray(services) ? services.join(',') : (services || null),
       owner_name || null, license_number || null,
-      iicrc_certified ? 1 : 0, featured ? 1 : 0
+      iicrc_certified ? 1 : 0, featured ? 1 : 0,
+      yelp_url || null, angi_url || null, thirtythree_mile_url || null,
+      inquirly_url || null, trello_url || null
     );
 
     res.json({ success: true, id: result.lastInsertRowid });
@@ -120,7 +124,8 @@ router.put('/locations/:id', requireAuth, (req, res) => {
     const {
       slug, name, city, state, zip_codes, phone, email, address,
       latitude, longitude, service_radius_miles, services, owner_name,
-      license_number, iicrc_certified, featured, active
+      license_number, iicrc_certified, featured, active,
+      yelp_url, angi_url, thirtythree_mile_url, inquirly_url, trello_url
     } = req.body;
 
     db.prepare(`
@@ -128,7 +133,10 @@ router.put('/locations/:id', requireAuth, (req, res) => {
         slug = ?, name = ?, city = ?, state = ?, zip_codes = ?, phone = ?, email = ?,
         address = ?, latitude = ?, longitude = ?, service_radius_miles = ?,
         services = ?, owner_name = ?, license_number = ?, iicrc_certified = ?,
-        featured = ?, active = ?, updated_at = CURRENT_TIMESTAMP
+        featured = ?, active = ?,
+        yelp_url = ?, angi_url = ?, thirtythree_mile_url = ?,
+        inquirly_url = ?, trello_url = ?,
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(
       slug, name, city, state, zip_codes || null, phone, email || null, address || null,
@@ -137,6 +145,8 @@ router.put('/locations/:id', requireAuth, (req, res) => {
       owner_name || null, license_number || null,
       iicrc_certified ? 1 : 0, featured ? 1 : 0,
       active !== undefined ? (active ? 1 : 0) : 1,
+      yelp_url || null, angi_url || null, thirtythree_mile_url || null,
+      inquirly_url || null, trello_url || null,
       req.params.id
     );
     res.json({ success: true });

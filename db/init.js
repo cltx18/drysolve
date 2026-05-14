@@ -35,6 +35,11 @@ db.exec(`
     iicrc_certified INTEGER DEFAULT 1,
     active INTEGER DEFAULT 1,
     featured INTEGER DEFAULT 0,
+    yelp_url TEXT,
+    angi_url TEXT,
+    thirtythree_mile_url TEXT,
+    inquirly_url TEXT,
+    trello_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -127,6 +132,16 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_calls_created ON calls(created_at);
   CREATE INDEX IF NOT EXISTS idx_calls_status ON calls(status);
 `);
+
+// Migration: add profile-link columns to existing locations table (idempotent)
+const profileLinkCols = ['yelp_url', 'angi_url', 'thirtythree_mile_url', 'inquirly_url', 'trello_url'];
+const existingCols = db.prepare("PRAGMA table_info(locations)").all().map(c => c.name);
+for (const col of profileLinkCols) {
+  if (!existingCols.includes(col)) {
+    db.exec(`ALTER TABLE locations ADD COLUMN ${col} TEXT`);
+    console.log(`✓ Added column locations.${col}`);
+  }
+}
 
 // Seed top US restoration metros (idempotent — only inserts if slug doesn't exist)
 const metros = [
